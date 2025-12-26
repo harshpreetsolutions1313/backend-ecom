@@ -46,14 +46,20 @@ app.use(express.json());
 
 let dbConnected = false;
 
-connectDB()
-  .then(() => {
-    dbConnected = true;
-    console.log('Database connected');
-  })
-  .catch((err) => {
-    console.error('Initial DB connection failed:', err);
-  });
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    return res.status(503).json({ 
+      error: 'Database unavailable',
+      message: error.message 
+    });
+  }
+});
+
+
 app.use('/api', routes);
 
 // Root
@@ -97,5 +103,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 module.exports = app;
