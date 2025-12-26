@@ -40,7 +40,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // REQUIRED on Vercel for preflight
-app.options('*', cors(corsOptions));
+// app.options('/*', cors(corsOptions));
 
 app.use(express.json());
 
