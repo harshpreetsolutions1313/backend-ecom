@@ -138,28 +138,65 @@ exports.searchProducts = async (req, res) => {
 };
 
 // API to get products by category
+// exports.getProductsByCategory = async (req, res) => {
+//   try {
+
+//     console.log("parameters received:", req.params);
+//     const category = req.params.categoryName;
+
+//     console.log("Searching for category:", category); 
+
+//     console.log("Fetching products for category:", category);
+
+//     const products = await Product.find({ category: category});
+
+//     console.log(`Found ${products.length} products in category ${category}`);
+
+//     res.json(products);
+
+//   } catch (error){
+
+//     res.status(500).json({error: error.message});
+    
+//   }
+// }
+
 exports.getProductsByCategory = async (req, res) => {
   try {
-
-    console.log("parameters received:", req.params);
+    console.log("inside a category");
     const category = req.params.categoryName;
+    const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 products per page if not provided
 
-    console.log("Searching for category:", category); 
+    const skip = (page - 1) * limit; // Calculate the number of products to skip
 
-    console.log("Fetching products for category:", category);
+    console.log(`Fetching products for category: ${category}, page: ${page}, limit: ${limit}`);
 
-    const products = await Product.find({ category: category});
+    // Fetch products with pagination
+    const products = await Product.find({ category: category })
+      .skip(skip)
+      .limit(limit);
 
-    console.log(`Found ${products.length} products in category ${category}`);
+    // Get the total number of products in the category for pagination metadata
+    const totalProducts = await Product.countDocuments({ category: category });
 
-    res.json(products);
+    console.log(`Found ${products.length} products in category ${category} for page ${page}`);
 
-  } catch (error){
-
-    res.status(500).json({error: error.message});
-    
+    // Send the paginated products along with pagination metadata
+    res.json({
+      products,
+      pagination: {
+        totalProducts,
+        totalPages: Math.ceil(totalProducts / limit),
+        currentPage: page,
+        productsPerPage: limit,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-}
+};
+
 
 // Admin API to create a category - each category should have category id, name, imageUrl
 

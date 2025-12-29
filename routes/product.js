@@ -16,7 +16,7 @@ router.get('/category/:categoryName', getProductsByCategory);
 
 // create category
 router.post('/category/create', createCategory);
-//filter products by price range
+//filter products by price range    
 router.get('/filter/price-range', filterProductsByPriceRange);
 router.get('/:id', getProduct);
 router.put('/:id', updateProduct);
