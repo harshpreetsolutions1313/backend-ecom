@@ -23,7 +23,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.getProductsByUser  = async (req, res) => {
+exports.getProductsByUser = async (req, res) => {
     try {
         const authenticatedUser = req.user;
 
@@ -31,19 +31,31 @@ exports.getProductsByUser  = async (req, res) => {
             return res.status(401).json({ message: 'Access denied. No authenticated user.' });
         }
 
-        const userId = authenticatedUser.id;
+        // Determine the userId to fetch products for
+        let userId;
+        if (authenticatedUser.isAdmin && req.query.user_id) {
+            // Admin can pass a user_id to fetch products for any user
+            userId = req.query.user_id;
+        } else {
+            // Regular user can only fetch their own products
+            userId = authenticatedUser.id;
+        }
 
+        // Fetch user details (name and email)
+        const userDetails = await User.findById(userId).select('name email').lean();
+        if (!userDetails) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // Fetch purchased orders for the specified user
         const purchasedOrders = await Order.find({ user_id: userId, paid: true })
-            .select('productId amount token orderId trackedAt -_id')
+            .select('productId amount token orderId trackedAt transactionHash buyer -_id')
             .lean();
-
-        // console.log(`Purchased Orders for User ID ${userId}:`, purchasedOrders);
 
         if (purchasedOrders.length === 0) {
             return res.status(404).json({ message: 'No purchased products found for this user.' });
         }
 
-        // --- NEW LOGIC: Fetch product details including images ---
         // Extract all unique productIds from the purchased orders
         const productIds = [...new Set(purchasedOrders.map(order => order.productId))];
 
@@ -62,19 +74,25 @@ exports.getProductsByUser  = async (req, res) => {
                 productImages: productDetails ? productDetails.images : [],
             };
         });
-        // --- END NEW LOGIC ---
 
-        // Return the list of orders/products with images
+        // Return the list of orders/products with images, along with user details
         res.json({
-            user: userId,
+            user: {
+                id: userId,
+                name: userDetails.name,
+                email: userDetails.email,
+            },
             count: enhancedPurchasedProducts.length,
-            products: enhancedPurchasedProducts // Use the enhanced list
+            products: enhancedPurchasedProducts,
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });
     }
 };
+
+
+
 
 // Add item to cart
 exports.addToCart = async (req, res) => {
@@ -211,4 +229,6 @@ exports.removeFromCart = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
 
