@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const User = require('../models/User');
+const Order = require('../models/Order');
 
 // Add a new product
 exports.addProduct = async (req, res) => {
@@ -324,5 +325,74 @@ exports.getWishlist = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getBestSellingProducts = async (req, res) => {
+  try {
+    // 1. Get all paid orders
+    const paidOrders = await Order.find({ paid: true });
+    // console.log("Paid Orders:", paidOrders);
+
+    // 2. Aggregate to get total quantity sold per product
+    const bestSellingProducts = await Order.aggregate([
+      { $match: { paid: true } },
+      { $group: {
+          _id: "$productId",
+          totalQuantity: { $sum: "$quantity" }
+        }
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: 4 }
+    ]);
+    // console.log("Aggregated Products:", bestSellingProducts);
+
+    // 3. Populate product names
+    const populatedProducts = await Promise.all(
+      bestSellingProducts.map(async (item) => {
+        const product = await Product.findOne({ id: item._id });
+        console.log("Product for ID", item._id, ":", product);
+        return {
+          productId: item._id,
+          name: product?.name || "Unknown",
+          quantity: item.totalQuantity
+        };
+      })
+    );
+    // console.log("Populated Products:", populatedProducts);
+
+    res.json({
+      success: true,
+      data: {
+        bestSellingProducts: populatedProducts
+      }
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// Filter products (price: low to high / high to low)
+exports.filterProducts = async (req, res) => {
+  try {
+    const { sort } = req.query;
+
+    let sortQuery = {};
+
+    // Price sorting
+    if (sort === 'price_asc') {
+      sortQuery.price = 1; // Low → High
+    } else if (sort === 'price_desc') {
+      sortQuery.price = -1; // High → Low
+    }
+
+    const products = await Product.find({}).sort(sortQuery);
+
+    res.status(200).json(products);
+  } catch (error) {
+    console.error('Error filtering products:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 

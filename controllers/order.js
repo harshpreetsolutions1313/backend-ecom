@@ -17,7 +17,7 @@ exports.createOrder = async (req, res) => {
     }
 
     const numericOrderId = Number(onChainOrderId);
-    
+
     if (Number.isNaN(numericOrderId)) {
       return res.status(400).json({ message: 'Invalid onChainOrderId provided.' });
     }
@@ -37,6 +37,21 @@ exports.createOrder = async (req, res) => {
     if (!onChainOrder.paid) {
       return res.status(400).json({ message: 'Order is not paid on-chain.' });
     }
+
+    // Fetch the product to check and update stock
+    const product = await Product.findOne({ id: productId });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+
+    // Check if the requested quantity is available
+    if (product.stock < quantity) {
+      return res.status(400).json({ message: 'Insufficient stock for the requested quantity.' });
+    }
+
+    // Decrease the stock
+    product.stock -= quantity;
+    await product.save();
 
     const orderData = {
       orderId: numericOrderId,
@@ -109,6 +124,21 @@ exports.createBatchOrder = async (req, res) => {
         return res.status(400).json({ message: `Order is not paid on-chain for product ${productId}.` });
       }
 
+      // Fetch the product to check and update stock
+      const product = await Product.findOne({ id: productId });
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found.' });
+      }
+
+      // Check if the requested quantity is available
+      if (product.stock < quantity) {
+        return res.status(400).json({ message: 'Insufficient stock for the requested quantity.' });
+      }
+
+      // Decrease the stock
+      product.stock -= quantity;
+      await product.save();
+
       ordersToTrack.push({
         orderId: numericOrderId,
         buyer: onChainOrder.buyer,
@@ -161,5 +191,25 @@ exports.payForOrder = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getOrderStats = async (req, res) => {
+  try {
+    // Total number of paid orders (considered as delivered)
+    const totalOrders = await Order.countDocuments({ paid: true });
+
+    // Since paid = true means delivered, both values are the same
+    const totalDeliveredOrders = totalOrders;
+
+    res.json({
+      success: true,
+      data: {
+        totalOrders,
+        totalDeliveredOrders,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
