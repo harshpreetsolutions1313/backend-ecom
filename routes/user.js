@@ -1,11 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { getProductsByUser, getAllUsers, addToCart, getCart, removeFromCart } = require('../controllers/user');
+const { getProductsByUser, getAllUsers, addToCart, getCart, removeFromCart, searchUsers } = require('../controllers/user');
 const { restrict } = require('../middleware/auth');
 const { admin } = require('../middleware/admin');
 const { getAllUsersTransactions } = require('../controllers/transaction');
 
 router.get('/', getAllUsers);
+router.get(
+    '/search',
+    restrict,
+    admin,
+    searchUsers
+);
 router.get('/purchased-products', restrict, getProductsByUser);
 router.get('/all-transactions', restrict, admin, getAllUsersTransactions);
 

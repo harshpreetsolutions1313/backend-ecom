@@ -230,5 +230,56 @@ exports.removeFromCart = async (req, res) => {
   }
 };
 
+// Search users by name or email
+exports.searchUsers = async (req, res) => {
+  try {
+    // console.log("Inside searchUsers controller");
+    const authenticatedUser = req.user;
+    // console.log("Authenticated user:", authenticatedUser);
+
+    // Optional but recommended: Admin-only search
+    if (!authenticatedUser || !authenticatedUser.isAdmin) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { query, name, email } = req.query;
+
+    if (!query && !name && !email) {
+      return res.status(400).json({
+        message: 'Provide query or name/email parameters'
+      });
+    }
+
+    const searchConditions = [];
+
+    if (query) {
+      searchConditions.push(
+        { name: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      );
+    }
+
+    if (name) {
+      searchConditions.push({ name: { $regex: name, $options: 'i' } });
+    }
+
+    if (email) {
+      searchConditions.push({ email: { $regex: email, $options: 'i' } });
+    }
+
+    const users = await User.find({
+      $or: searchConditions
+    }).select('-password');
+
+    res.status(200).json({
+      count: users.length,
+      users
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 
