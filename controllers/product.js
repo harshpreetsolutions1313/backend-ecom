@@ -86,26 +86,51 @@ exports.listCategories = async (req, res) => {
 
 // List all product categories with image and count
 // i can proovide the response of get products so that you can extract the categories with image and count
+// exports.listCategoriesWithDetails = async (req, res) => {
+//   try {
+//     const products = await Product.find({});
+//     const categoryMap = {};
+//     products.forEach(product => {
+//       if (!categoryMap[product.category]) {
+//         categoryMap[product.category] = {
+//           category: product.category,
+//           imageUrl: product.images[0] || null,
+//           count: 0
+//         };
+//       }
+//       categoryMap[product.category].count += 1;
+//     });
+//     const categories = Object.values(categoryMap);
+//     res.json(categories);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   } 
+// };
+
 exports.listCategoriesWithDetails = async (req, res) => {
   try {
-    const products = await Product.find({});
-    const categoryMap = {};
-    products.forEach(product => {
-      if (!categoryMap[product.category]) {
-        categoryMap[product.category] = {
-          category: product.category,
-          imageUrl: product.images[0] || null,
-          count: 0
-        };
-      }
-      categoryMap[product.category].count += 1;
-    });
-    const categories = Object.values(categoryMap);
-    res.json(categories);
+    const categories = await Category.find().lean()
+
+    const products = await Product.find().select('category').lean()
+
+    const countMap = {}
+    products.forEach(p => {
+      countMap[p.category] = (countMap[p.category] || 0) + 1
+    })
+
+    const result = categories.map(cat => ({
+      _id: cat._id,
+      category: cat.name,
+      imageUrl: cat.imageUrl,
+      count: countMap[cat.name] || 0
+    }))
+
+    res.json(result)
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  } 
-};
+    res.status(500).json({ error: error.message })
+  }
+}
+
 
 exports.searchProducts = async (req, res) => {
   try {
