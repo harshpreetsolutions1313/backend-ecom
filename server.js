@@ -17,8 +17,7 @@ const allowedOrigins = [
   // Frontend (Vercel)
   'https://ecom-smoky-delta.vercel.app',
   'https://frontend-ecom-six.vercel.app',
-
-
+  'https://admin-1313store.vercel.app'
 ];
 
 const corsOptions = {
