@@ -141,7 +141,8 @@ exports.addToCart = async (req, res) => {
     const existingItem = user.cart.find((item) => item.productId === productId);
 
     if (existingItem) {
-      existingItem.quantity += quantity;
+      // existingItem.quantity += quantity;
+      existingItem.quantity = quantity;
     } else {
       user.cart.push({ productId, quantity });
     }
