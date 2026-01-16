@@ -8,8 +8,9 @@ const orderRoutes = require('./order');
 const userRoutes = require('./user.js');
 const authRoutes = require('./auth');
 const dashboardRoutes = require('./dashboard');
+const categoryRoutes = require('./category');
 
-
+router.use('/categories', categoryRoutes);
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
 router.use('/auth', authRoutes);

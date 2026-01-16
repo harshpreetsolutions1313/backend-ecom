@@ -107,29 +107,7 @@ exports.listCategories = async (req, res) => {
 //   } 
 // };
 
-exports.listCategoriesWithDetails = async (req, res) => {
-  try {
-    const categories = await Category.find().lean()
 
-    const products = await Product.find().select('category').lean()
-
-    const countMap = {}
-    products.forEach(p => {
-      countMap[p.category] = (countMap[p.category] || 0) + 1
-    })
-
-    const result = categories.map(cat => ({
-      _id: cat._id,
-      category: cat.name,
-      imageUrl: cat.imageUrl,
-      count: countMap[cat.name] || 0
-    }))
-
-    res.json(result)
-  } catch (error) {
-    res.status(500).json({ error: error.message })
-  }
-}
 
 
 exports.searchProducts = async (req, res) => {
@@ -226,25 +204,25 @@ exports.getProductsByCategory = async (req, res) => {
 
 // Admin API to create a category - each category should have category id, name, imageUrl
 
-exports.createCategory = async (req, res) => {
+// exports.createCategory = async (req, res) => {
 
-  try {
+//   try {
 
-    const { name, imageUrl } = req.body;
+//     const { name, imageUrl } = req.body;
 
-    const category = new Category({ name, imageUrl });
+//     const category = new Category({ name, imageUrl });
 
-    await category.save();
+//     await category.save();
 
-    res.status(201).json(category);
+//     res.status(201).json(category);
 
-  } catch (error) {
+//   } catch (error) {
 
-    res.status(500).json({ error: error.message });
+//     res.status(500).json({ error: error.message });
 
-  }
+//   }
 
-};
+// };
 
 // filter products by pricerange
 exports.filterProductsByPriceRange = async (req, res) => {

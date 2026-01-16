@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addProduct, getProducts, getProduct, updateProduct, deleteProduct, listCategories, listCategoriesWithDetails, searchProducts, getProductsByCategory, createCategory } = require('../controllers/product');
+const { addProduct, getProducts, getProduct, updateProduct, deleteProduct, listCategories, listCategoriesWithDetails, searchProducts, getProductsByCategory } = require('../controllers/product');
 const { filterProductsByPriceRange, addToWishlist, removeFromWishlist, getWishlist, getBestSellingProducts, filterProducts } = require('../controllers/product');
 const { restrict } = require('../middleware/auth');
 const {
@@ -14,12 +14,10 @@ router.get('/category-stats', getCategoryStats);
 router.get('/wishlist', restrict, getWishlist);
 router.get('/search', searchProducts);
 router.get('/categories/list', listCategories);
-// router.get('/categories', listCategoriesWithDetails);
-router.get('/categories/details', listCategoriesWithDetails);
 router.get('/category/:categoryName', getProductsByCategory);
 
 // create category
-router.post('/category/create', createCategory);
+// router.post('/category/create', createCategory);
 //filter products by price range    
 router.get('/filter/price-range', filterProductsByPriceRange);
 

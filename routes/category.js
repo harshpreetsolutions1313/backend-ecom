@@ -1,26 +1,20 @@
-// add category
-exports.createCategory = async (req, res) => {
-    try {
-        const { name, description } = req.body;
-        const category = new Category({ name, description });
-        await category.save();
-        res.status(201).json(category);
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+const express = require('express');
+const router = express.Router();
+
+const {
+  createCategory,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+  listCategoriesWithDetails
+} = require('../controllers/category');
+
+router.get('/details', listCategoriesWithDetails);
+router.post('/create', createCategory);
+router.get('/:id', getCategoryById);
+router.put('/:id', updateCategory);
+router.delete('/:id', deleteCategory);
 
 
-// create sub category
-exports.createSubCategory = async (req, res) => {
-    try {
-        const { name, categoryId } = req.body;
-        const subCategory = new SubCategory({ name, category: categoryId });
-        await subCategory.save();
-        res.status(201).json(subCategory);
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+
+module.exports = router;
