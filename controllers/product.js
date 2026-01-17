@@ -397,5 +397,43 @@ exports.filterProducts = async (req, res) => {
   }
 };
 
+exports.searchProductsByCategory = async (req, res) => {
+  try {
+    const { q, category, page = 1, limit = 10 } = req.query;
 
+    if (!category) {
+      return res.status(400).json({ message: 'category is required' });
+    }
 
+    const searchFilter = {
+      category: category
+    };
+
+    // If search keyword exists, add name search
+    if (q) {
+      searchFilter.name = { $regex: q, $options: 'i' };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find(searchFilter)
+      .skip(skip)
+      .limit(Number(limit));
+
+    const totalProducts = await Product.countDocuments(searchFilter);
+
+    res.status(200).json({
+      products,
+      pagination: {
+        totalProducts,
+        totalPages: Math.ceil(totalProducts / limit),
+        currentPage: Number(page),
+        productsPerPage: Number(limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error searching products by category:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
